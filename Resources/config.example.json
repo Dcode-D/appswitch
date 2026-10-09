@@ -1,0 +1,14 @@
+{
+  "moveCursor": false,
+  "bindings": [
+    { "shortcut": "cmd+shift+t", "bundleID": "com.apple.Terminal" },
+    { "shortcut": "cmd+shift+c", "bundleID": "com.openai.codex" },
+    { "shortcut": "cmd+shift+h", "bundleID": "com.google.Chrome" },
+    { "shortcut": "cmd+shift+i", "bundleID": "com.apple.ScreenContinuity" },
+    { "shortcut": "cmd+shift+o", "bundleID": "dev.kdrag0n.MacVirt" },
+    { "shortcut": "cmd+shift+d", "bundleID": "com.tinyapp.TablePlus" },
+    { "shortcut": "cmd+shift+m", "bundleID": "com.microsoft.teams2" },
+    { "shortcut": "cmd+shift+v", "bundleID": "com.microsoft.VSCode" },
+    { "shortcut": "cmd+shift+p", "bundleID": "com.postmanlabs.mac" }
+  ]
+}
