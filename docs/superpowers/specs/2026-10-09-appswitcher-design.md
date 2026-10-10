@@ -1,8 +1,8 @@
-# AppSwitcher Design Specification
+# appswtich Design Specification
 
 ## Purpose
 
-AppSwitcher is a small, open-source macOS background utility. A user assigns a global keyboard shortcut to an application; pressing it launches or activates the application, focuses a useful window, and can move the mouse pointer to that window. The first version is for one local user and roughly 10–50 bindings. It has no graphical interface and no third-party runtime dependencies.
+appswtich is a small, open-source macOS background utility. A user assigns a global keyboard shortcut to an application; pressing it launches or activates the application, focuses a useful window, and can move the mouse pointer to that window. The first version is for one local user and roughly 10–50 bindings. It has no graphical interface and no third-party runtime dependencies.
 
 Success means application switching feels immediate, multi-monitor behavior is predictable, configuration mistakes do not disable a previously working setup, and failures are visible from a foreground diagnostic command.
 

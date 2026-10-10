@@ -1,6 +1,6 @@
-# AppSwitcher
+# appswtich
 
-AppSwitcher is a lightweight, configuration-driven macOS utility that launches or activates applications with global keyboard shortcuts. It can focus a useful application window and optionally move the pointer to that window. It has no graphical interface or third-party runtime dependencies.
+appswtich is a lightweight, configuration-driven macOS utility that launches or activates applications with global keyboard shortcuts. It can focus a useful application window and optionally move the pointer to that window. It has no graphical interface or third-party runtime dependencies.
 
 Repeated presses traverse an application's normal windows in order. Pressing again on its last—or only—window hides the app and returns to the previously active application. Invoking it later starts again at its first window.
 
@@ -38,7 +38,7 @@ The installer creates these mappings when no configuration exists:
 
 The complete file is [`Resources/config.example.json`](Resources/config.example.json). Terminal keeps `T`; Teams uses `M` because duplicate shortcuts are invalid. The native hotkey API represents both Command keys as `cmd`, so either Command key activates these shortcuts even though the intended usage is Right Command.
 
-Set `"moveCursor": true` to move the pointer to the focused window. AppSwitcher does not directly control macOS Spaces; application activation follows your system settings.
+Set `"moveCursor": true` to move the pointer to the focused window. appswtich does not directly control macOS Spaces; application activation follows your system settings.
 
 Find another app's bundle identifier with:
 
