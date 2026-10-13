@@ -54,6 +54,16 @@ public final class Diagnostics {
             }
         }
 
+        for hotKey in configuration.quickSwitchHotKeys {
+            switch hotKeyRegistrar.probe(hotKey) {
+            case .success:
+                messages.append("\(hotKey.canonical): available")
+            case let .failure(error):
+                messages.append("\(hotKey.canonical): unavailable (\(error))")
+                isReady = false
+            }
+        }
+
         return DiagnosticReport(messages: messages, exitCode: isReady ? 0 : 3)
     }
 }

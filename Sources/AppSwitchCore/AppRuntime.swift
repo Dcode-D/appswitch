@@ -4,6 +4,7 @@ public final class AppRuntime {
     private let hotKeyRegistrar: HotKeyRegistering
     private let coordinator: SwitchCoordinating
     private let permissionChecker: AccessibilityPermissionChecking
+    private let quickSwitchSelector: RunningApplicationSelecting?
     private let log: (String) -> Void
     private var started = false
     private var terminated = false
@@ -12,11 +13,13 @@ public final class AppRuntime {
         hotKeyRegistrar: HotKeyRegistering,
         coordinator: SwitchCoordinating,
         permissionChecker: AccessibilityPermissionChecking,
+        quickSwitchSelector: RunningApplicationSelecting? = nil,
         log: @escaping (String) -> Void
     ) {
         self.hotKeyRegistrar = hotKeyRegistrar
         self.coordinator = coordinator
         self.permissionChecker = permissionChecker
+        self.quickSwitchSelector = quickSwitchSelector
         self.log = log
     }
 
@@ -35,6 +38,26 @@ public final class AppRuntime {
                 }
             } catch {
                 log("could not register \(binding.hotKey.canonical): \(error)")
+            }
+        }
+
+        if let quickSwitchSelector {
+            for (index, hotKey) in configuration.quickSwitchHotKeys.enumerated() {
+                let binding = AppBinding(hotKey: hotKey, bundleIdentifier: "")
+                do {
+                    try hotKeyRegistrar.register(binding: binding) { [weak self] in
+                        guard let self,
+                              let bundleIdentifier = quickSwitchSelector.bundleIdentifier(at: index)
+                        else {
+                            return
+                        }
+                        self.coordinator.handle(
+                            AppBinding(hotKey: hotKey, bundleIdentifier: bundleIdentifier)
+                        )
+                    }
+                } catch {
+                    log("could not register \(hotKey.canonical): \(error)")
+                }
             }
         }
     }

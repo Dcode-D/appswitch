@@ -9,7 +9,7 @@ struct ConfigurationLoaderTests {
         {
           "moveCursor": true,
           "bindings": [
-            {"shortcut": "cmd+option+1", "bundleID": "com.apple.Safari"}
+            {"shortcut": "option+cmd+1", "bundleID": "com.apple.Safari"}
           ]
         }
         """))
@@ -20,23 +20,81 @@ struct ConfigurationLoaderTests {
         #expect(configuration.bindings[0].bundleIdentifier == "com.apple.Safari")
     }
 
+    @Test func defaultsLegacyBaseKeyShortcutsToCommandShift() throws {
+        let configuration = try ConfigurationLoader.load(data: data("""
+        {"bindings":[{"shortcut":"a","bundleID":"com.example.App"}]}
+        """))
+
+        #expect(configuration.bindings[0].hotKey.canonical == "cmd+shift+a")
+    }
+
     @Test func defaultsMoveCursorToFalse() throws {
         let configuration = try ConfigurationLoader.load(data: data("""
-        {"bindings":[{"shortcut":"cmd+a","bundleID":"com.example.App"}]}
+        {"bindings":[{"shortcut":"a","bundleID":"com.example.App"}]}
         """))
 
         #expect(configuration.moveCursor == false)
     }
 
+    @Test func loadsQuickSwitchShortcutsFromConfiguredPrefixAndKeys() throws {
+        let configuration = try ConfigurationLoader.load(data: data("""
+        {
+          "quickSwitch": {"prefix":"control+option","keys":["1","f2"]},
+          "bindings":[{"shortcut":"a","bundleID":"com.example.App"}]
+        }
+        """))
+
+        #expect(configuration.quickSwitchHotKeys.map(\.canonical) == [
+            "control+option+1",
+            "control+option+f2",
+        ])
+    }
+
+    @Test func rejectsQuickSwitchShortcutThatDuplicatesAConfiguredBinding() {
+        expectError(.duplicateShortcut("cmd+1"), for: """
+        {
+          "quickSwitch": {"prefix":"cmd","keys":["1"]},
+          "bindings":[{"shortcut":"cmd+1","bundleID":"com.example.App"}]
+        }
+        """)
+    }
+
+    @Test func rejectsUnknownQuickSwitchField() {
+        expectError(.unknownQuickSwitchField("extra"), for: """
+        {
+          "quickSwitch": {"prefix":"cmd","keys":["1"],"extra":true},
+          "bindings":[{"shortcut":"a","bundleID":"com.example.App"}]
+        }
+        """)
+    }
+
+    @Test func rejectsQuickSwitchWithoutKeys() {
+        expectError(.emptyQuickSwitchKeys, for: """
+        {
+          "quickSwitch": {"prefix":"cmd","keys":[]},
+          "bindings":[{"shortcut":"a","bundleID":"com.example.App"}]
+        }
+        """)
+    }
+
+    @Test func identifiesAnInvalidQuickSwitchKey() {
+        expectError(.invalidQuickSwitchShortcut(index: 0, reason: "unsupported shortcut token 'not-a-key'"), for: """
+        {
+          "quickSwitch": {"prefix":"cmd","keys":["not-a-key"]},
+          "bindings":[{"shortcut":"a","bundleID":"com.example.App"}]
+        }
+        """)
+    }
+
     @Test func rejectsUnknownTopLevelField() {
         expectError(.unknownTopLevelField("extra"), for: """
-        {"bindings":[{"shortcut":"cmd+a","bundleID":"com.example.App"}],"extra":1}
+        {"bindings":[{"shortcut":"a","bundleID":"com.example.App"}],"extra":1}
         """)
     }
 
     @Test func rejectsUnknownBindingField() {
         expectError(.unknownBindingField(index: 0, field: "name"), for: """
-        {"bindings":[{"shortcut":"cmd+a","bundleID":"com.example.App","name":"App"}]}
+        {"bindings":[{"shortcut":"a","bundleID":"com.example.App","name":"App"}]}
         """)
     }
 
@@ -46,16 +104,16 @@ struct ConfigurationLoaderTests {
 
     @Test func rejectsEmptyBundleIdentifier() {
         expectError(.emptyBundleIdentifier(index: 0), for: """
-        {"bindings":[{"shortcut":"cmd+a","bundleID":"  "}]}
+        {"bindings":[{"shortcut":"a","bundleID":"  "}]}
         """)
     }
 
     @Test func rejectsDuplicateCanonicalShortcut() {
-        expectError(.duplicateShortcut("cmd+option+1"), for: """
+        expectError(.duplicateShortcut("cmd+shift+f1"), for: """
         {
           "bindings": [
-            {"shortcut":"option+cmd+1","bundleID":"com.example.One"},
-            {"shortcut":"CMD+OPTION+1","bundleID":"com.example.Two"}
+            {"shortcut":"f1","bundleID":"com.example.One"},
+            {"shortcut":"SHIFT+CMD+F1","bundleID":"com.example.Two"}
           ]
         }
         """)
@@ -64,7 +122,7 @@ struct ConfigurationLoaderTests {
     @Test func rejectsMalformedJSONWithoutReturningPartialConfiguration() {
         #expect(throws: ConfigurationError.self) {
             try ConfigurationLoader.load(data: data("""
-            {"bindings":[{"shortcut":"cmd+a","bundleID":"com.example.App"}]
+            {"bindings":[{"shortcut":"a","bundleID":"com.example.App"}]
             """))
         }
     }
@@ -87,6 +145,18 @@ struct ConfigurationLoaderTests {
         )
 
         #expect(configuration.bindings.count == 9)
+        #expect(configuration.quickSwitchHotKeys.map(\.canonical) == [
+            "cmd+1",
+            "cmd+2",
+            "cmd+3",
+            "cmd+4",
+            "cmd+5",
+            "cmd+6",
+            "cmd+7",
+            "cmd+8",
+            "cmd+9",
+            "cmd+0",
+        ])
         #expect(configuration.bindings.first?.bundleIdentifier == "com.apple.Terminal")
         #expect(configuration.bindings.last?.bundleIdentifier == "com.postmanlabs.mac")
     }

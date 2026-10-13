@@ -6,9 +6,12 @@ public enum ConfigurationError: Error, Equatable, CustomStringConvertible {
     case rootMustBeObject
     case unknownTopLevelField(String)
     case unknownBindingField(index: Int, field: String)
+    case unknownQuickSwitchField(String)
     case invalidDocument(String)
     case emptyBindings
+    case emptyQuickSwitchKeys
     case emptyBundleIdentifier(index: Int)
+    case invalidQuickSwitchShortcut(index: Int, reason: String)
     case invalidShortcut(index: Int, reason: String)
     case duplicateShortcut(String)
 
@@ -24,12 +27,18 @@ public enum ConfigurationError: Error, Equatable, CustomStringConvertible {
             return "unknown configuration field '\(field)'"
         case let .unknownBindingField(index, field):
             return "binding \(index) has unknown field '\(field)'"
+        case let .unknownQuickSwitchField(field):
+            return "quickSwitch has unknown field '\(field)'"
         case let .invalidDocument(reason):
             return "invalid configuration: \(reason)"
         case .emptyBindings:
             return "configuration must contain at least one binding"
+        case .emptyQuickSwitchKeys:
+            return "quickSwitch must contain at least one key"
         case let .emptyBundleIdentifier(index):
             return "binding \(index) has an empty bundleID"
+        case let .invalidQuickSwitchShortcut(index, reason):
+            return "quickSwitch key \(index) makes an invalid shortcut: \(reason)"
         case let .invalidShortcut(index, reason):
             return "binding \(index) has an invalid shortcut: \(reason)"
         case let .duplicateShortcut(shortcut):
@@ -41,7 +50,13 @@ public enum ConfigurationError: Error, Equatable, CustomStringConvertible {
 public enum ConfigurationLoader {
     private struct Document: Decodable {
         let moveCursor: Bool?
+        let quickSwitch: QuickSwitch?
         let bindings: [Binding]
+    }
+
+    private struct QuickSwitch: Decodable {
+        let prefix: String
+        let keys: [String]
     }
 
     private struct Binding: Decodable {
@@ -49,8 +64,9 @@ public enum ConfigurationLoader {
         let bundleID: String
     }
 
-    private static let topLevelFields: Set<String> = ["moveCursor", "bindings"]
+    private static let topLevelFields: Set<String> = ["moveCursor", "quickSwitch", "bindings"]
     private static let bindingFields: Set<String> = ["shortcut", "bundleID"]
+    private static let quickSwitchFields: Set<String> = ["prefix", "keys"]
 
     public static func load(from url: URL) throws -> AppConfiguration {
         let data: Data
@@ -85,6 +101,10 @@ public enum ConfigurationLoader {
                 }
             }
         }
+        if let quickSwitch = object["quickSwitch"] as? [String: Any],
+           let field = Set(quickSwitch.keys).subtracting(quickSwitchFields).sorted().first {
+            throw ConfigurationError.unknownQuickSwitchField(field)
+        }
 
         let document: Document
         do {
@@ -98,6 +118,29 @@ public enum ConfigurationLoader {
         }
 
         var seenShortcuts = Set<String>()
+        var quickSwitchHotKeys: [HotKey] = []
+        if let quickSwitch = document.quickSwitch {
+            guard !quickSwitch.keys.isEmpty else {
+                throw ConfigurationError.emptyQuickSwitchKeys
+            }
+            quickSwitchHotKeys.reserveCapacity(quickSwitch.keys.count)
+            for (index, key) in quickSwitch.keys.enumerated() {
+                let hotKey: HotKey
+                do {
+                    hotKey = try ShortcutParser.parse("\(quickSwitch.prefix)+\(key)")
+                } catch {
+                    throw ConfigurationError.invalidQuickSwitchShortcut(
+                        index: index,
+                        reason: String(describing: error)
+                    )
+                }
+                guard seenShortcuts.insert(hotKey.canonical).inserted else {
+                    throw ConfigurationError.duplicateShortcut(hotKey.canonical)
+                }
+                quickSwitchHotKeys.append(hotKey)
+            }
+        }
+
         var bindings: [AppBinding] = []
         bindings.reserveCapacity(document.bindings.count)
 
@@ -109,7 +152,10 @@ public enum ConfigurationLoader {
 
             let hotKey: HotKey
             do {
-                hotKey = try ShortcutParser.parse(binding.shortcut)
+                let shortcut = binding.shortcut.contains("+")
+                    ? binding.shortcut
+                    : "cmd+shift+\(binding.shortcut)"
+                hotKey = try ShortcutParser.parse(shortcut)
             } catch {
                 throw ConfigurationError.invalidShortcut(index: index, reason: String(describing: error))
             }
@@ -120,6 +166,10 @@ public enum ConfigurationLoader {
             bindings.append(AppBinding(hotKey: hotKey, bundleIdentifier: bundleIdentifier))
         }
 
-        return AppConfiguration(moveCursor: document.moveCursor ?? false, bindings: bindings)
+        return AppConfiguration(
+            moveCursor: document.moveCursor ?? false,
+            bindings: bindings,
+            quickSwitchHotKeys: quickSwitchHotKeys
+        )
     }
 }

@@ -25,9 +25,15 @@ public struct AppBinding: Hashable, Sendable {
 public struct AppConfiguration: Equatable, Sendable {
     public let moveCursor: Bool
     public let bindings: [AppBinding]
+    public let quickSwitchHotKeys: [HotKey]
 
-    public init(moveCursor: Bool, bindings: [AppBinding]) {
+    public init(
+        moveCursor: Bool,
+        bindings: [AppBinding],
+        quickSwitchHotKeys: [HotKey] = []
+    ) {
         self.moveCursor = moveCursor
         self.bindings = bindings
+        self.quickSwitchHotKeys = quickSwitchHotKeys
     }
 }

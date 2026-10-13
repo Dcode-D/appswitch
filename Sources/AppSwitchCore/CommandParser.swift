@@ -37,13 +37,17 @@ public enum ExampleConfiguration {
     public static let json = """
     {
       "moveCursor": false,
+      "quickSwitch": {
+        "prefix": "cmd",
+        "keys": ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"]
+      },
       "bindings": [
         {
           "shortcut": "cmd+option+1",
           "bundleID": "com.apple.Safari"
         },
         {
-          "shortcut": "cmd+option+2",
+          "shortcut": "control+shift+2",
           "bundleID": "com.microsoft.VSCode"
         }
       ]

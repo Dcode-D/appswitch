@@ -15,6 +15,7 @@ Success means application switching feels immediate, multi-monitor behavior is p
 5. Configure behavior in a readable file without rebuilding the executable.
 6. Detect invalid shortcuts, missing applications, permission problems, and hotkey conflicts.
 7. Start automatically after login while using negligible CPU when idle.
+8. Optionally switch directly to the first ten running GUI applications with numbered shortcuts.
 
 ## Scope
 
@@ -48,20 +49,26 @@ Configuration lives at `~/.config/appswitch/config.json`:
 ```json
 {
   "moveCursor": false,
+  "quickSwitch": {
+    "prefix": "cmd",
+    "keys": ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"]
+  },
   "bindings": [
     {
       "shortcut": "cmd+option+1",
       "bundleID": "com.apple.Safari"
     },
     {
-      "shortcut": "cmd+option+2",
+      "shortcut": "control+shift+2",
       "bundleID": "com.microsoft.VSCode"
     }
   ]
 }
 ```
 
-Modifier names are case-insensitive and normalized to `cmd`, `control`, `option`, and `shift`. Every shortcut must contain at least one modifier. Unknown fields, unknown key names, duplicate shortcuts, empty bundle identifiers, and an empty binding list are validation errors. `moveCursor` defaults to `false` when omitted.
+Modifier names are case-insensitive and normalized to `cmd`, `control`, `option`, and `shift`. Every full shortcut must contain at least one modifier. For backward compatibility, a shortcut containing only a letter, digit, or function key defaults to Command+Shift. Unknown fields, unknown key names, duplicate shortcuts, empty bundle identifiers, and an empty binding list are validation errors. `moveCursor` defaults to `false` when omitted.
+
+`quickSwitch` is optional. Its prefix and ordered keys map to slots in the running regular GUI applications: the first key selects slot 1 and the tenth key selects slot 10. The initial slot order is newest launch first, with workspace order as a stable fallback when macOS has no launch date. New bundle identifiers enter at the front; a bundle keeps its slot while any regular process with that identifier remains, and gaps close only after its last regular process exits. Selecting the frontmost application's slot is a no-op.
 
 The agent reads configuration at startup. A documented `launchctl kickstart -k` command restarts it and loads edits; live file watching is deliberately excluded from v1. Configuration changes never require recompilation.
 
@@ -72,6 +79,7 @@ The project contains one executable target and focused modules:
 - **Configuration:** decode JSON, normalize shortcut strings, and return either a fully valid configuration or specific errors.
 - **Hotkeys:** translate validated shortcuts to macOS key codes, register them using `RegisterEventHotKey`, dispatch presses, and unregister cleanly on shutdown.
 - **Applications:** resolve bundle identifiers, find or launch applications with `NSWorkspace`, and activate them with `NSRunningApplication`.
+- **Running application order:** maintain stable per-bundle slots for optional quick switching and reconcile them with the current regular GUI application snapshot on each press.
 - **Windows:** use the macOS Accessibility API to select and raise a window.
 - **Cursor:** calculate a safe point and move the pointer with `CGWarpMouseCursorPosition` only when enabled.
 - **Diagnostics:** perform the same validation and resolution used by `run`, report permission and registration readiness, and use stable exit codes.

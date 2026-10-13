@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Build a lightweight, configuration-driven macOS utility that maps global shortcuts to application launch/focus actions and can optionally move the pointer to the selected window.
+**Goal:** Build a lightweight, configuration-driven macOS utility that maps global shortcuts to application launch/focus actions, optionally maps numbered shortcuts to running GUI applications, and can move the pointer to the selected window.
 
 **Architecture:** A dependency-free Swift Package will contain a testable `AppSwitchCore` library and a thin `appswitch` executable. Native adapters wrap Carbon global hotkeys, AppKit application activation, Accessibility window control, Quartz cursor movement, and `launchd`; pure configuration, selection, and coordination logic remains independently testable.
 
@@ -17,11 +17,12 @@
 - Provide no settings window or menu-bar interface in v1.
 - Read configuration from `~/.config/appswitch/config.json`.
 - Identify applications by bundle identifier.
-- Accept Command, Control, Option, and Shift plus one letter, digit, or function key; require at least one modifier.
+- Accept Command, Control, Option, and Shift plus one letter, digit, or function key; require at least one modifier for full shortcuts and treat legacy one-key shortcuts as Command+Shift.
 - Default `moveCursor` to `false`.
 - Use public macOS APIs only; do not directly control Spaces.
 - Never run as root and never attempt to grant Accessibility permission automatically.
 - Preserve the user's configuration during uninstall.
+- When `quickSwitch` is configured, keep newest-first per-bundle launch-order slots, insert newly seen apps at the front, and provide ten numbered keys by default.
 
 ## Review Focus
 

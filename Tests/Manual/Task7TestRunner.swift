@@ -24,7 +24,21 @@ enum Task7TestRunner {
             }
         )
 
-        guard configuration.moveCursor == false, actual == expected else {
+        guard configuration.moveCursor == false,
+              actual == expected,
+              configuration.quickSwitchHotKeys.map(\.canonical) == [
+                  "cmd+1",
+                  "cmd+2",
+                  "cmd+3",
+                  "cmd+4",
+                  "cmd+5",
+                  "cmd+6",
+                  "cmd+7",
+                  "cmd+8",
+                  "cmd+9",
+                  "cmd+0",
+              ]
+        else {
             fputs("FAIL: installed example does not match the requested mappings\n", stderr)
             exit(1)
         }

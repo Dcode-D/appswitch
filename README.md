@@ -38,6 +38,19 @@ The installer creates these mappings when no configuration exists:
 
 The complete file is [`Resources/config.example.json`](Resources/config.example.json). Terminal keeps `T`; Teams uses `M` because duplicate shortcuts are invalid. The native hotkey API represents both Command keys as `cmd`, so either Command key activates these shortcuts even though the intended usage is Right Command.
 
+Configure each binding's complete shortcut using one or more of `cmd`, `control`, `option`, and `shift`, plus one letter, digit, or function key. For example, `"shortcut": "control+option+t"` registers Control+Option+T. Modifier names are case-insensitive and may appear in any order. Existing one-key values such as `"t"` remain supported and default to Command+Shift+T.
+
+Enable quick switching between running apps with:
+
+```json
+"quickSwitch": {
+  "prefix": "cmd",
+  "keys": ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"]
+}
+```
+
+Running GUI apps are numbered newest first: Cmd+1 selects the most recently launched app, Cmd+2 selects the next newest, and so on through Cmd+9; Cmd+0 selects the tenth app. New apps take slot 1 and shift older apps to higher-numbered shortcuts. When an app quits, the gap closes. Pressing the slot for the active app does nothing. Both the modifier prefix and keys are configurable; for example, `"prefix": "control+option"` is also valid. Remove `quickSwitch` to disable the feature.
+
 Set `"moveCursor": true` to move the pointer to the focused window. appswtich does not directly control macOS Spaces; application activation follows your system settings.
 
 Find another app's bundle identifier with:
@@ -83,13 +96,22 @@ As a live test, open two Terminal windows. From another app, press Cmd+Shift+T r
 
 ### Configuration and Updates
 
-Edit `~/.config/appswitch/config.json`, then reload the agent:
+In the latest version, every part of a shortcut is configurable. Edit `~/.config/appswitch/config.json` and change the complete `shortcut` value. For example, to change Terminal from Cmd+Shift+T to Control+Option+T:
+
+```json
+{ "shortcut": "control+option+t", "bundleID": "com.apple.Terminal" }
+```
+
+You can replace either modifier with `cmd`, `control`, `option`, or `shift`; modifier names are case-insensitive and may appear in any order. The final key can be a letter, digit, or F1–F20. Use at least one modifier. A legacy one-key value such as `"t"` still defaults to Cmd+Shift+T.
+
+After saving the file, reload the agent and validate the updated shortcuts:
 
 ```bash
 launchctl kickstart -k gui/$(id -u)/io.github.appswitch
+~/.local/bin/appswitch check
 ```
 
-The installer preserves an existing configuration. After installing a newly built binary, repeat the Accessibility removal/addition and restart steps above.
+Configuration edits do not require rebuilding. If your installed binary predates configurable modifiers, run `./scripts/install.sh` from this repository first; the installer preserves your existing configuration. After installing a newly built binary, repeat the Accessibility removal/addition and restart steps above.
 
 ### Troubleshooting
 

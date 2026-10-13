@@ -33,6 +33,9 @@ private func runService() throws -> Int32 {
     let configuration = try loadConfiguration()
     let registrar = try CarbonHotKeyRegistrar()
     let permissionChecker = SystemAccessibilityPermissionChecker()
+    let quickSwitchSelector = configuration.quickSwitchHotKeys.isEmpty
+        ? nil
+        : NSWorkspaceRunningApplicationSelector()
     let coordinator = SwitchCoordinator(
         moveCursor: configuration.moveCursor,
         activator: ApplicationActivator(),
@@ -44,6 +47,7 @@ private func runService() throws -> Int32 {
         hotKeyRegistrar: registrar,
         coordinator: coordinator,
         permissionChecker: permissionChecker,
+        quickSwitchSelector: quickSwitchSelector,
         log: log
     )
     try runtime.start(configuration: configuration)
