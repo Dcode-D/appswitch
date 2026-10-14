@@ -3,15 +3,18 @@ import Foundation
 
 public struct RunningApplicationIdentity: Equatable, Sendable {
     public let bundleIdentifier: String
+    public let localizedName: String?
     public let launchDate: Date?
     public let processIdentifier: Int32?
 
     public init(
         bundleIdentifier: String,
+        localizedName: String? = nil,
         launchDate: Date?,
         processIdentifier: Int32? = nil
     ) {
         self.bundleIdentifier = bundleIdentifier
+        self.localizedName = localizedName
         self.launchDate = launchDate
         self.processIdentifier = processIdentifier
     }
@@ -82,6 +85,19 @@ public struct RunningApplicationOrder: Sendable {
         return bundleIdentifier == frontmostBundleIdentifier ? nil : bundleIdentifier
     }
 
+    public mutating func applications(
+        among applications: [RunningApplicationIdentity]
+    ) -> [RunningApplicationIdentity] {
+        reconcile(with: applications)
+        let applicationsByBundle = Dictionary(
+            applications.map { ($0.bundleIdentifier, $0) },
+            uniquingKeysWith: { first, second in
+                first.localizedName == nil ? second : first
+            }
+        )
+        return bundleIdentifiers.compactMap { applicationsByBundle[$0] }
+    }
+
     private mutating func reconcile(with applications: [RunningApplicationIdentity]) {
         let currentBundleIdentifiers = Self.orderedBundleIdentifiers(from: applications)
         let currentSet = Set(currentBundleIdentifiers)
@@ -132,6 +148,11 @@ public final class NSWorkspaceRunningApplicationSelector: RunningApplicationSele
         )
     }
 
+    public func applications() -> [RunningApplicationIdentity] {
+        let applications = Self.regularApplications(in: workspace)
+        return order.applications(among: applications)
+    }
+
     private static func regularApplications(
         in workspace: NSWorkspace
     ) -> [RunningApplicationIdentity] {
@@ -143,6 +164,7 @@ public final class NSWorkspaceRunningApplicationSelector: RunningApplicationSele
             }
             return RunningApplicationIdentity(
                 bundleIdentifier: bundleIdentifier,
+                localizedName: application.localizedName,
                 launchDate: application.launchDate,
                 processIdentifier: application.processIdentifier
             )

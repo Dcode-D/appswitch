@@ -7,8 +7,9 @@ enum QuickSwitchTestRunner {
         try testConfiguration()
         try testPrintedExampleHasTenSlots()
         try testRunningApplicationOrder()
+        try testListOutput()
         try testRuntimeDispatch()
-        print("PASS: quick switch configuration, ordering, and dispatch")
+        print("PASS: quick switch configuration, ordering, listing, and dispatch")
     }
 
     private static func testPrintedExampleHasTenSlots() throws {
@@ -177,6 +178,32 @@ enum QuickSwitchTestRunner {
                 "com.example.B",
             ],
             "restarted and newly launched apps did not join in reverse launch order"
+        )
+    }
+
+    private static func testListOutput() throws {
+        let lines = QuickSwitchList.lines(
+            hotKeys: [
+                try ShortcutParser.parse("cmd+1"),
+                try ShortcutParser.parse("cmd+2"),
+            ],
+            applications: [
+                RunningApplicationIdentity(
+                    bundleIdentifier: "com.apple.Safari",
+                    localizedName: "Safari",
+                    launchDate: Date(timeIntervalSince1970: 20)
+                ),
+            ]
+        )
+        try require(
+            lines == ["cmd+1\tSafari\tcom.apple.Safari", "cmd+2\t—"],
+            "quick switch list did not show assigned and empty slots"
+        )
+        try require(
+            QuickSwitchList.lines(hotKeys: [], applications: []) == [
+                "Quick switch is not configured.",
+            ],
+            "quick switch list did not explain missing configuration"
         )
     }
 

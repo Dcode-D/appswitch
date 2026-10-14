@@ -51,6 +51,14 @@ Enable quick switching between running apps with:
 
 Running GUI apps are numbered newest first: Cmd+1 selects the most recently launched app, Cmd+2 selects the next newest, and so on through Cmd+9; Cmd+0 selects the tenth app. New apps take slot 1 and shift older apps to higher-numbered shortcuts. When an app quits, the gap closes. Pressing the slot for the active app does nothing. Both the modifier prefix and keys are configurable; for example, `"prefix": "control+option"` is also valid. Remove `quickSwitch` to disable the feature.
 
+Show the current numbered application list in Terminal with:
+
+```bash
+~/.local/bin/appswitch list
+```
+
+Each assigned line contains the shortcut, the application name when macOS provides it, and the bundle identifier. Unassigned shortcuts are shown with `—`.
+
 Set `"moveCursor": true` to move the pointer to the focused window. appswtich does not directly control macOS Spaces; application activation follows your system settings.
 
 Find another app's bundle identifier with:

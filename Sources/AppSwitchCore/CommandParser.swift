@@ -3,6 +3,7 @@ import Foundation
 public enum Command: Equatable, Sendable {
     case run
     case check
+    case list
     case printExample
 }
 
@@ -12,7 +13,7 @@ public enum CommandParseError: Error, Equatable, CustomStringConvertible {
     public var exitCode: Int32 { 2 }
 
     public var description: String {
-        "usage: appswitch [run|check|print-example]"
+        "usage: appswitch [run|check|list|print-example]"
     }
 }
 
@@ -25,6 +26,8 @@ public enum CommandParser {
             return .run
         case ["check"]:
             return .check
+        case ["list"]:
+            return .list
         case ["print-example"]:
             return .printExample
         default:

@@ -37,6 +37,7 @@ enum Task6TestRunner {
     private static func testSupportedCommands() throws {
         try require(try CommandParser.parse(arguments: ["run"]) == .run, "run was not parsed")
         try require(try CommandParser.parse(arguments: ["check"]) == .check, "check was not parsed")
+        try require(try CommandParser.parse(arguments: ["list"]) == .list, "list was not parsed")
         try require(
             try CommandParser.parse(arguments: ["print-example"]) == .printExample,
             "print-example was not parsed"

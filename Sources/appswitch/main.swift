@@ -27,6 +27,18 @@ private func runDiagnostics() throws -> Int32 {
     return report.exitCode
 }
 
+private func printQuickSwitchList() throws -> Int32 {
+    let configuration = try loadConfiguration()
+    let applications = configuration.quickSwitchHotKeys.isEmpty
+        ? []
+        : NSWorkspaceRunningApplicationSelector().applications()
+    QuickSwitchList.lines(
+        hotKeys: configuration.quickSwitchHotKeys,
+        applications: applications
+    ).forEach { print($0) }
+    return 0
+}
+
 private func runService() throws -> Int32 {
     let application = NSApplication.shared
     application.setActivationPolicy(.accessory)
@@ -91,6 +103,8 @@ private func execute(_ command: Command) -> Int32 {
             return 0
         case .check:
             return try runDiagnostics()
+        case .list:
+            return try printQuickSwitchList()
         case .run:
             return try runService()
         }
@@ -110,7 +124,7 @@ do {
     fputs("\(error)\n", stderr)
     exit(error.exitCode)
 } catch {
-    fputs("usage: appswitch [run|check|print-example]\n", stderr)
+    fputs("usage: appswitch [run|check|list|print-example]\n", stderr)
     exit(2)
 }
 
